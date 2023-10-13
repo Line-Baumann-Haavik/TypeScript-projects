@@ -15,4 +15,4 @@ const test: elevatedEmployee = {name: "Erik", privileges: ["admin"],startDate: n
 type Combinable = number | string;
 type test2 = number | boolean;
 
-type Combined = Combinable & test2;
+type Combined = Combinable & test2; 
