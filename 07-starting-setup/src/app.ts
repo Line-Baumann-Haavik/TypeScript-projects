@@ -34,3 +34,11 @@ function countAndDescribe<T extends Lenghty>(value: T){
 }
 
 console.log(countAndDescribe("Hi there!"));
+
+
+function extractAndConvert<T extends object, U extends keyof T>(obj: T, key: U){
+    return "Value: "+obj[key];
+}
+
+
+console.log(extractAndConvert({name: "Markus"}, "name"));
