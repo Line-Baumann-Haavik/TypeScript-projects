@@ -1,3 +1,35 @@
+//Validation Logic
+interface Validatable {
+    value: string | number,
+    required: boolean,
+    minLength?: number,
+    maxLength?: number,
+    min?: number,
+    max?: number
+}
+
+function validate(validatableObject: Validatable): boolean{
+    let isValid = true;
+    if(validatableObject.required){
+        isValid = isValid && validatableObject.value.toString().trim().length !== 0;
+    }
+    if(typeof validatableObject.value === "string" && validatableObject.minLength != null){
+        isValid = isValid && validatableObject.value.length >= validatableObject.minLength;
+    }
+    if(typeof validatableObject.value === "string" && validatableObject.maxLength != null){
+        isValid = isValid && validatableObject.value.length <= validatableObject.maxLength;
+    }
+    if(typeof validatableObject.value === "number" && validatableObject.min != null){
+        isValid = isValid && validatableObject.value >= validatableObject.min;
+    }
+    if(typeof validatableObject.value === "number" && validatableObject.max != null){
+        isValid = isValid && validatableObject.value <= validatableObject.max;
+    }
+    return isValid;
+}
+
+
+
 //descriptor
 function autobind(_: any, _2: string, descriptor: PropertyDescriptor){
     const originalMethod = descriptor.value;
@@ -12,7 +44,7 @@ function autobind(_: any, _2: string, descriptor: PropertyDescriptor){
 }
 
 
-//class
+//classes
 class ProjectInput {
     templateElement: HTMLTemplateElement;
     hostElement: HTMLDivElement;
@@ -35,13 +67,59 @@ class ProjectInput {
         this.configure();
         this.attach();
     }
+
+    private gatherUserInput():[string, string, number] | void{
+        const titleInput = this.titleInputElement.value;
+        const descriptionInput = this.descriptionInputElement.value;
+        const peopleInput = this.peopleInputElement.value;
+
+        const titleValidatable: Validatable = {
+            value: titleInput,
+            required: true,
+            minLength: 1
+        }
+
+        const descriptionValidatable: Validatable = {
+            value: descriptionInput,
+            required: true,
+            minLength: 5,
+            maxLength: 50
+        }
+
+        const peopleValidatable: Validatable = {
+            value: peopleInput,
+            required: true,
+            min: 1,
+            max: 150
+        }
+
+        if( !validate(titleValidatable) || !validate(descriptionValidatable) || !validate(peopleValidatable)){
+            alert("Invalid input, please try again");
+            return;
+        }else{
+            return [titleInput, descriptionInput, +peopleInput];
+        }
+    }
+
     private attach(){
         this.hostElement.insertAdjacentElement("afterbegin", this.element);
+    }
+
+    private clearInputs(): void {
+        this.titleInputElement.value = "";
+        this.descriptionInputElement.value = "";
+        this.peopleInputElement.value = "";
     }
 
     @autobind
     private submitHandler(event: Event){
         event.preventDefault();
+        const userInput = this.gatherUserInput();
+        if(Array.isArray(userInput)){
+            const [title, desc, people] = userInput;
+            console.log(title,desc,people);
+            this.clearInputs();
+        }
 
     }
 
