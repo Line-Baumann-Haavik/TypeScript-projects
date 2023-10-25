@@ -111,46 +111,54 @@ function autobind(_: any, _2: string, descriptor: PropertyDescriptor) {
   return adjDescriptor;
 }
 
-//classes
-
-class ProjectList {
+//Component Base Class
+abstract class Component<T extends HTMLElement, U extends HTMLElement> {
   templateElement: HTMLTemplateElement;
-  hostElement: HTMLDivElement;
-  element: HTMLElement;
-  assignedProjects: Project[];
+  hostElement: T;
+  element: U;
 
-  constructor(private type: "active" | "finished") {
+  constructor(
+    templateElementID: string,
+    hostElementID: string,
+    insertNewElement: InsertPosition,
+    newElementID?: string
+  ) {
     this.templateElement = document.getElementById(
-      "project-list"
+      templateElementID
     )! as HTMLTemplateElement;
-    this.hostElement = document.getElementById("app")! as HTMLDivElement;
-    this.assignedProjects = [];
+    this.hostElement = document.getElementById(hostElementID)! as T;
 
     const importedContent = document.importNode(
       this.templateElement.content,
       true
     );
-    this.element = importedContent.firstElementChild! as HTMLElement;
-    this.element.id = `${this.type}-projects`;
+    this.element = importedContent.firstElementChild! as U;
+    if (newElementID) {
+      this.element.id = newElementID;
+    }
 
-    projectState.addListeners((projects: Project[]) => {
-      const relelvantProjects = projects.filter((project) => {
-        if (this.type === "active") {
-          return project.status === ProjectStatus.Active;
-        } else {
-          return project.status === ProjectStatus.Finished;
-        }
-      });
-      this.assignedProjects = relelvantProjects;
-      this.renderProjects();
-    });
-
-    this.attach();
-    this.renderContent();
+    this.attach(insertNewElement);
   }
 
-  private attach() {
-    this.hostElement.insertAdjacentElement("beforeend", this.element);
+  private attach(insertElement: InsertPosition) {
+    this.hostElement.insertAdjacentElement(insertElement, this.element);
+  }
+
+  abstract configure(): void;
+  abstract renderContent(): void;
+
+}
+
+//classes
+class ProjectList extends Component<HTMLDivElement, HTMLElement> {
+  assignedProjects: Project[];
+
+  constructor(private type: "active" | "finished") {
+    super("project-list", "app","beforeend", `${type}-projects`);
+    this.assignedProjects = [];
+
+    this.renderContent();
+    this.configure();
   }
 
   private renderProjects() {
@@ -165,11 +173,25 @@ class ProjectList {
     }
   }
 
-  private renderContent() {
+  renderContent() {
     const listID = `${this.type}-projects-list`;
     this.element.querySelector("ul")!.id = listID;
     this.element.querySelector("h2")!.textContent =
       this.type.toUpperCase() + " PROJECTS";
+  }
+
+  configure(){
+    projectState.addListeners((projects: Project[]) => {
+        const relelvantProjects = projects.filter((project) => {
+          if (this.type === "active") {
+            return project.status === ProjectStatus.Active;
+          } else {
+            return project.status === ProjectStatus.Finished;
+          }
+        });
+        this.assignedProjects = relelvantProjects;
+        this.renderProjects();
+      });
   }
 }
 
