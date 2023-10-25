@@ -1,12 +1,22 @@
 //Project State Management
-type Listener = (items: Project[]) => void;
 
-class ProjectState {
-  private listeners: Listener[] = [];
+type Listener<T> = (items: T[]) => void;
+class State<T> {
+  protected listeners: Listener<T>[] = [];
+
+  addListeners(listenerFn: Listener<T>) {
+    this.listeners.push(listenerFn);
+  }
+}
+
+
+class ProjectState extends State<Project> {
   private projects: Project[] = [];
   private static instance: ProjectState;
 
-  private constructor() {}
+  private constructor() {
+    super();
+  }
 
   static getInstance() {
     if (this.instance) {
@@ -14,10 +24,6 @@ class ProjectState {
     }
     this.instance = new ProjectState();
     return this.instance;
-  }
-
-  addListeners(listenerFn: Listener) {
-    this.listeners.push(listenerFn);
   }
 
   addProject(title: string, description: string, numofPeople: number) {
@@ -146,7 +152,6 @@ abstract class Component<T extends HTMLElement, U extends HTMLElement> {
 
   abstract configure(): void;
   abstract renderContent(): void;
-
 }
 
 //classes
@@ -154,7 +159,7 @@ class ProjectList extends Component<HTMLDivElement, HTMLElement> {
   assignedProjects: Project[];
 
   constructor(private type: "active" | "finished") {
-    super("project-list", "app","beforeend", `${type}-projects`);
+    super("project-list", "app", "beforeend", `${type}-projects`);
     this.assignedProjects = [];
 
     this.renderContent();
@@ -180,22 +185,22 @@ class ProjectList extends Component<HTMLDivElement, HTMLElement> {
       this.type.toUpperCase() + " PROJECTS";
   }
 
-  configure(){
+  configure() {
     projectState.addListeners((projects: Project[]) => {
-        const relelvantProjects = projects.filter((project) => {
-          if (this.type === "active") {
-            return project.status === ProjectStatus.Active;
-          } else {
-            return project.status === ProjectStatus.Finished;
-          }
-        });
-        this.assignedProjects = relelvantProjects;
-        this.renderProjects();
+      const relelvantProjects = projects.filter((project) => {
+        if (this.type === "active") {
+          return project.status === ProjectStatus.Active;
+        } else {
+          return project.status === ProjectStatus.Finished;
+        }
       });
+      this.assignedProjects = relelvantProjects;
+      this.renderProjects();
+    });
   }
 }
 
-class ProjectInput extends Component<HTMLDivElement, HTMLFormElement>{
+class ProjectInput extends Component<HTMLDivElement, HTMLFormElement> {
   titleInputElement: HTMLInputElement;
   descriptionInputElement: HTMLInputElement;
   peopleInputElement: HTMLInputElement;
@@ -270,9 +275,7 @@ class ProjectInput extends Component<HTMLDivElement, HTMLFormElement>{
     }
   }
 
-  renderContent(): void {
-      
-  }
+  renderContent(): void {}
 
   configure() {
     this.element.addEventListener("submit", this.submitHandler);
